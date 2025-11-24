@@ -1,0 +1,74 @@
+/* Overall page */
+.app-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e1e2f, #141421);
+  font-family: "Inter", sans-serif;
+  color: #fff;
+}
+
+/* Navigation container */
+.nav-container {
+  text-align: center;
+  padding: 40px 50px;
+  background: #232336;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  width: 380px;
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: 24px;
+  font-weight: 600;
+  color: #e4e4ff;
+}
+
+/* Button group */
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Buttons */
+.nav-btn {
+  padding: 14px 20px;
+  background: #3c3c52;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+
+.nav-btn:hover {
+  background: #5a5ab3;
+  transform: translateY(-2px);
+}
+
+.nav-btn:active {
+  transform: translateY(0);
+}
+
+/* Page containers for wallets */
+.wallet-page {
+  max-width: 600px;
+  margin: auto;
+  padding: 30px;
+  background: #232336;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+.wallet-title {
+  text-align: center;
+  font-size: 26px;
+  margin-bottom: 24px;
+  font-weight: 600;
+  color: #e4e4ff;
+}
