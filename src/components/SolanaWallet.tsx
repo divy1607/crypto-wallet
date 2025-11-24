@@ -6,17 +6,42 @@ import nacl from "tweetnacl";
 import { useNavigate } from "react-router-dom";
 
 export function SolanaWallet() {
+
     const [index, setIndex] = useState(0);
-    const [pubkeys, setPubkeys] = useState<PublicKey[]>([]);
+    const [wallets, setWallets] = useState<
+        { pub: PublicKey; priv: string; visible: boolean }[]
+    >([]);
     const [mnemonic, setMnemonic] = useState<string>("");
+    const [copied, setCopied] = useState(false);
+
+    const toastStyle: React.CSSProperties = {
+        position: "fixed",
+        bottom: "30px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        background: "rgba(0,0,0,0.8)",
+        color: "white",
+        padding: "10px 18px",
+        borderRadius: "8px",
+        fontSize: "14px",
+        opacity: copied ? 1 : 0,
+        transition: "opacity 0.4s ease",
+    };
+
+    const handleCopy = (text: string) => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+
+        setTimeout(() => setCopied(false), 1500); // hide after 1.5 sec
+    };
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (pubkeys.length === 0) {
+        if (wallets.length === 0) {
             setMnemonic("");
         }
-    }, [pubkeys]);
+    }, [wallets]);
 
     const generateWallet = async () => {
         let finalMnemonic = mnemonic;
@@ -33,13 +58,20 @@ export function SolanaWallet() {
         const secretKey = nacl.sign.keyPair.fromSeed(derivedSeed).secretKey;
         const keypair = Keypair.fromSecretKey(secretKey);
 
+        const privateKeyBase58 = Buffer.from(secretKey).toString("base64");
+
+        setWallets(prev => [...prev, {
+            pub: keypair.publicKey,
+            priv: privateKeyBase58,
+            visible: false
+        }]);
         setIndex((i) => i + 1);
-        setPubkeys((prev) => [...prev, keypair.publicKey]);
+        // setPubkeys((prev) => [...prev, keypair.publicKey]);
     };
 
-    const deleteWallet = (p: PublicKey) => {
-        setPubkeys((prev) =>
-            prev.filter((key) => key.toBase58() !== p.toBase58())
+    const deleteWallet = (pub: PublicKey) => {
+        setWallets(prev =>
+            prev.filter(w => w.pub.toBase58() !== pub.toBase58())
         );
     };
 
@@ -53,7 +85,7 @@ export function SolanaWallet() {
                 <h2 style={titleStyle}>Solana Wallet</h2>
 
                 <button style={actionButton} onClick={generateWallet}>
-                    {pubkeys.length === 0 ? "Generate Wallet" : "Add Another Wallet"}
+                    {wallets.length === 0 ? "Generate Wallet" : "Add Another Wallet"}
                 </button>
 
                 {mnemonic && (
@@ -64,14 +96,61 @@ export function SolanaWallet() {
                 )}
 
                 <div style={{ marginTop: "20px" }}>
-                    {pubkeys.map((p) => (
-                        <div key={p.toBase58()} style={walletBox}>
-                            <div style={{ wordBreak: "break-all" }}>
-                                <strong>Public Key:</strong> {p.toBase58()}
+                    {wallets.map((w, index) => (
+                        <div key={w.pub.toBase58()} style={walletBox}>
+                            <div>
+                                {/* Public Key */}
+                                <div style={{ wordBreak: "break-all", marginBottom: "8px" }}>
+                                    <strong>Public Key:</strong> {w.pub.toBase58()}
+                                </div>
+
+                                {/* PRIVATE KEY SECTION */}
+                                <div style={{ display: "flex", alignItems: "center", marginTop: "8px" }}>
+                                    <strong>Private Key:&nbsp;</strong>
+
+                                    {/* Hidden / Visible Private Key */}
+                                    <span style={{
+                                        wordBreak: "break-all",
+                                        fontFamily: "monospace",
+                                        letterSpacing: "1px",
+                                        userSelect: w.visible ? "text" : "none"
+                                    }}>
+                                        {w.visible ? w.priv : "•••••••••••••••••••••••"}
+                                    </span>
+
+                                    {/* EYE BUTTON */}
+                                    <button
+                                        onClick={() => {
+                                            setWallets(prev =>
+                                                prev.map((w, i) =>
+                                                    i === index ? { ...w, visible: !w.visible } : w
+                                                )
+                                            );
+                                        }}
+                                        style={iconButton}
+                                    >
+                                        {w.visible ? "🔒" : "🔓"}
+                                    </button>
+
+                                    {/* COPY BUTTON */}
+                                    <button
+                                        style={iconButton}
+                                        onClick={() => handleCopy(w.priv)}
+                                    >
+                                        📋
+                                    </button>
+                                    {copied && (
+                                        <div style={toastStyle}>
+                                            Copied!
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+
+                            {/* DELETE WALLET BUTTON */}
                             <button
                                 style={deleteButton}
-                                onClick={() => deleteWallet(p)}
+                                onClick={() => deleteWallet(w.pub)}
                             >
                                 Delete
                             </button>
@@ -88,15 +167,25 @@ export function SolanaWallet() {
 // ************** INLINE CSS STYLES ************** //
 
 const pageWrapper: React.CSSProperties = {
-  width: "100vw",
-  minHeight: "100vh",             
-  background: "linear-gradient(135deg, #0f0f1b, #1a1a32)",
-  display: "flex",
-  justifyContent: "center",
-  paddingTop: "60px",
-  fontFamily: "Inter, sans-serif",
-  color: "white",
-  paddingBottom: "60px",           
+    width: "100vw",
+    minHeight: "100vh",
+    background: "linear-gradient(135deg, #0f0f1b, #1a1a32)",
+    display: "flex",
+    justifyContent: "center",
+    paddingTop: "60px",
+    fontFamily: "Inter, sans-serif",
+    color: "white",
+    paddingBottom: "60px",
+};
+
+const iconButton: React.CSSProperties = {
+    marginLeft: "10px",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    background: "rgba(255,255,255,0.1)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    cursor: "pointer",
+    fontSize: "16px",
 };
 
 const cardStyle: React.CSSProperties = {
@@ -115,6 +204,7 @@ const titleStyle: React.CSSProperties = {
     marginBottom: "20px",
     textAlign: "center",
 };
+
 
 const homeButton: React.CSSProperties = {
     padding: "10px 16px",
@@ -166,6 +256,7 @@ const walletBox: React.CSSProperties = {
     justifyContent: "space-between",
     alignItems: "center",
 };
+
 
 const deleteButton: React.CSSProperties = {
     padding: "8px 14px",
